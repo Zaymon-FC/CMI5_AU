@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<courseStructure xmlns="https://w3id.org/xapi/profiles/cmi5/v1/CourseStructure.xsd">
+    <course id="http://courses.example.com/idenfifiers/1337Course">
+        <title>
+            <langstring lang="en-US">1337 Course Name</langstring>
+        </title>
+        <description>
+            <langstring lang="en-US">
+                This is a course description I think
+            </langstring>
+        </description>
+    </course>
+
+    <au id="http://localhost:50136/">
+        <title>
+            <langstring lang="en-US">Course 1</langstring>
+        </title>
+        <description>
+            <langstring lang="en-US">
+                Open Our Course
+            </langstring>
+        </description>
+        <url>http://localhost:50136/</url>
+    </au>
+
+    <au id="http://localhost:50136/">
+        <title>
+            <langstring lang="en-US">Course 2</langstring>
+        </title>
+        <description>
+            <langstring lang="en-US">
+                Open Our Course
+            </langstring>
+        </description>
+        <url>http://localhost:50136/</url>
+    </au>
+
+    <au id="http://localhost:50136/">
+        <title>
+            <langstring lang="en-US">Course 3</langstring>
+        </title>
+        <description>
+            <langstring lang="en-US">
+                Open Our Course
+            </langstring>
+        </description>
+        <url>http://localhost:50136/</url>
+    </au>
+</courseStructure>
