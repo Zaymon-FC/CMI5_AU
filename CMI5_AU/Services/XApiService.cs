@@ -56,7 +56,7 @@ namespace CMI5_AU.Services
             return verb;
         }
 
-        public void SendStatement(string shortVerb)
+        public void SendStatement(string shortVerb, HttpRequest Request)
         {
 
             if (!ValidateVerb(shortVerb))
@@ -65,7 +65,18 @@ namespace CMI5_AU.Services
             }
 
             // Connect to the LRS
-            lrs = ConnectLrs(username, password);
+            // Lets try and mash the enpoint out of the Query String
+
+            var endpoint = Request.QueryString["endpoint"];
+            //var endpoint = Request.QueryString("endpoint");
+            if (endpoint != null)
+            {
+                lrs = ConnectLrs(username, password, endpoint);
+            }
+            else
+            {
+                lrs = ConnectLrs(username, password);
+            }
 
 
             // Define the actor
@@ -77,7 +88,7 @@ namespace CMI5_AU.Services
 
             // Define the activity
             var activity = new Activity();
-            activity.id = "http://www.example.com/SomeActivity";
+            activity.id = "http://localhost:50136";
 
             // Define the statement
             var statement = new Statement();
