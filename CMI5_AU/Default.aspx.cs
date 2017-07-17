@@ -19,32 +19,32 @@ namespace CMI5_AU
 
         protected void Launched_Click(object sender, EventArgs e)
         {
-            _xApiService.SendStatement("launched", Request);
+            _xApiService.CreateStatement("launched", Request);
         }
 
         protected void Terminated_Click(object sender, EventArgs e)
         {
-            _xApiService.SendStatement("terminated", Request);
+            _xApiService.CreateStatement("terminated", Request);
         }
 
         protected void Passed_Click(object sender, EventArgs e)
         {
-            _xApiService.SendStatement("passed", Request);
+            _xApiService.CreateStatement("passed", Request);
         }
 
         protected void Completed_Click(object sender, EventArgs e)
         {
-            _xApiService.SendStatement("completed", Request);
+            _xApiService.CreateStatement("completed", Request);
         }
 
         protected void Progressed_Click(object sender, EventArgs e)
         {
-            _xApiService.SendStatement("progressed", Request);
+            _xApiService.CreateStatement("progressed", Request);
         }
 
         protected void Initialized_Click(object sender, EventArgs e)
         {
-            _xApiService.SendStatement("initialized", Request);
+            _xApiService.CreateStatement("initialized", Request);
         }
 
         protected void AllButtons_Click(object sender, EventArgs e)

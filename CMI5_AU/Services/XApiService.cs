@@ -5,13 +5,14 @@ using System.Web;
 using TinCan.LRSResponses;
 using TinCan;
 using System.Diagnostics;
+using Newtonsoft.Json;
 
 namespace CMI5_AU.Services
 {
     public class XApiService
     {
-        private string username = "zaymon.fc@conceptsafety.com.au";
-        private string password = "!P@ssw0rd";
+        private string _username = "zaymon.fc@conceptsafety.com.au";
+        private string _password = "!P@ssw0rd";
 
         private Dictionary<string, Uri> verbMap = new Dictionary<string, Uri>
         {
@@ -23,11 +24,58 @@ namespace CMI5_AU.Services
             { "terminated", new Uri("http://adlnet.gov/expapi/verbs/terminated") }
         };
 
-        private RemoteLRS lrs;
+        private RemoteLRS _lrs;
+        private HttpRequest _request;
+
+        public void CreateStatement(string shortVerb, HttpRequest Request)
+        {
+            _request = Request;
+
+            Verb verb;
+            if (!ValidateVerb(shortVerb))
+            {
+                throw new Exception("Supplied Verb is not in the map of valid verbs (Check spelling or usage?)");
+            }
+            else
+            {
+                // Create the verb using the supplied shortverb
+                verb = CreateVerb(shortVerb);
+            }
+
+            // Connect to the LRS
+            // Lets try and mash the enpoint out of the Query String
+            var endpoint = _request.QueryString["endpoint"];
+            _lrs = string.IsNullOrEmpty(endpoint) ? ConnectLrs(_username, _password, endpoint) : ConnectLrs(_username, _password);
+
+            // Create the statement context
+            var context = new Context();
+
+            //Create the actor (of type agent)
+            var actor = CreateActor(context);
+
+            // Define the activity
+            var activity = CreateActivity();
+
+            // Define the statement
+            var statement = new Statement()
+            {
+                actor = actor,
+                verb = verb,
+                target = activity,
+                context = context
+            };
+
+            SendStatement(statement);
+        }
+
+        private bool ValidateVerb(string verb)
+        {
+            return verbMap.ContainsKey(verb);
+        }
+
 
         private RemoteLRS ConnectLrs(string username, string password, string endpoint= "https://cloud.scorm.com/tc/YP5P8MYB6K/sandbox/")
         {
-
             try
             {
                 return new RemoteLRS(endpoint, username, password);
@@ -39,65 +87,65 @@ namespace CMI5_AU.Services
             }
         }
 
-        private bool ValidateVerb(string verb)
-        {
-            return verbMap.ContainsKey(verb) ? true : false;
-        }
-
         private Verb CreateVerb(string shortVerb)
         {
             Uri verbUri;
+            // Check if the verb is in the verb map
             verbMap.TryGetValue(shortVerb, out verbUri);
 
-            var verb = new Verb();
-            verb.id = verbUri;
-            verb.display = new LanguageMap();
+            // Define a new verb and return
+            var verb = new Verb()
+            {
+                id = verbUri,
+                display = new LanguageMap()
+            };
+
             verb.display.Add("en-US", shortVerb);
             return verb;
         }
 
-        public void SendStatement(string shortVerb, HttpRequest Request)
+        private Agent CreateActor(Context context)
         {
+            var actorJSON = JsonConvert.DeserializeObject<ActorJSON>(_request.QueryString["actor"]);
+            var actor = new Agent();
 
-            if (!ValidateVerb(shortVerb))
+            if (actorJSON == null)
             {
-                throw new Exception("Supplied Verb is not in the map of valid verbs (Check spelling or usage?)");
-            }
-
-            // Connect to the LRS
-            // Lets try and mash the enpoint out of the Query String
-
-            var endpoint = Request.QueryString["endpoint"];
-            //var endpoint = Request.QueryString("endpoint");
-            if (endpoint != null)
-            {
-                lrs = ConnectLrs(username, password, endpoint);
+                // TODO: Create context creation function once I understand the requirements
+                context.registration = new Guid(_request.QueryString["registration"]);
+                actor.mbox = "mailto:example@example.com";
+                actor.name = "Zaymon Foulds-Cook";
             }
             else
             {
-                lrs = ConnectLrs(username, password);
+                var name = actorJSON.name;
+                var mbox = actorJSON.account.name; //.Split('|')[1]; ? Depending on if we need that identifier on the front?
+                actor.mbox = mbox;
+                actor.name = name;
             }
+            return actor;
+        }
 
-
-            // Define the actor
-            var actor = new Agent();
-            actor.mbox = "mailto:example@example.com";
-            actor.name = "Zaymon Foulds-Cook";
-
-            Verb verb = CreateVerb(shortVerb);
-
-            // Define the activity
+        private Activity CreateActivity()
+        {
+            // Get the activityId from the query
             var activity = new Activity();
-            activity.id = "http://localhost:50136";
+            var activityId = _request.QueryString["activityId"];
+            if (activityId != null)
+            {
+                activity.id = activityId;
+            }
+            else
+            {
+                activity.id = "http://localhost:50136";
+            }
+            return activity;
+        }
 
-            // Define the statement
-            var statement = new Statement();
-            statement.actor = actor;
-            statement.verb = verb;
-            statement.target = activity;
-
+        private void SendStatement(Statement statement)
+        {
             // Send the statement to the LRS
-            StatementLRSResponse lrsResponse = lrs.SaveStatement(statement);
+            StatementLRSResponse lrsResponse = _lrs.SaveStatement(statement);
             if (lrsResponse.success)
             {
                 // Updated 'statement' here, now with id
@@ -109,5 +157,18 @@ namespace CMI5_AU.Services
             }
         }
     }
+}
 
+// Define a class as a helper when deserialising information provided by the LRS
+class ActorJSON
+{
+    public string objectType { get; set; }
+    public Account account { get; set; }
+    public string name { get; set; }
+}
+
+class Account
+{
+    public string homePage { get; set; }
+    public string name { get; set; }
 }

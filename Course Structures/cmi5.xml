@@ -11,7 +11,8 @@
         </description>
     </course>
 
-    <au id="http://localhost:50136/">
+    <au id="http://localhost:50136/" activityType="http://adlnet.gov/expapi/activities/lesson" launchMethod="AnyWindow"
+    moveOn="CompletedAndPassed" masteryScore="1.0">
         <title>
             <langstring lang="en-US">Course 1</langstring>
         </title>
@@ -23,7 +24,8 @@
         <url>http://localhost:50136/</url>
     </au>
 
-    <au id="http://localhost:50136/">
+    <au id="http://localhost:50136/" activityType="http://adlnet.gov/expapi/activities/lesson" launchMethod="AnyWindow"
+    moveOn="CompletedAndPassed" masteryScore="1.0">
         <title>
             <langstring lang="en-US">Course 2</langstring>
         </title>
@@ -35,7 +37,8 @@
         <url>http://localhost:50136/</url>
     </au>
 
-    <au id="http://localhost:50136/">
+    <au id="http://localhost:50136/" activityType="http://adlnet.gov/expapi/activities/lesson" launchMethod="AnyWindow"
+    moveOn="CompletedAndPassed" masteryScore="1.0">
         <title>
             <langstring lang="en-US">Course 3</langstring>
         </title>
