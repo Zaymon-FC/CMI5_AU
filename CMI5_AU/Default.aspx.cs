@@ -5,6 +5,7 @@ using System.Web;
 using System.Web.UI;
 using System.Web.UI.WebControls;
 using CMI5_AU.Services;
+using System.Diagnostics;
 
 namespace CMI5_AU
 {
@@ -12,9 +13,17 @@ namespace CMI5_AU
     {
 
         XApiService _xApiService = new XApiService();
+        // Code block to investigate values being posted
+        string[] postKeys;
 
-        protected void Page_Load(object sender, EventArgs e)
+    protected void Page_Load(object sender, EventArgs e)
         {
+            Console.WriteLine("Page Loaded");
+            postKeys = Request.Form.AllKeys;
+            foreach (string key in postKeys)
+            {
+                Console.WriteLine("Post Key: " + key);
+            }
         }
 
         protected void Launched_Click(object sender, EventArgs e)

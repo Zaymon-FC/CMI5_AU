@@ -7,6 +7,15 @@ using TinCan;
 using System.Diagnostics;
 using Newtonsoft.Json;
 
+
+
+/// <summary>
+///  Notes, Need to add an authority statement and implement a working context checker to remove the plethora
+///  of isnotnull statements throughout the services
+/// </summary>
+
+
+
 namespace CMI5_AU.Services
 {
     public class XApiService
@@ -30,6 +39,7 @@ namespace CMI5_AU.Services
         public void CreateStatement(string shortVerb, HttpRequest Request)
         {
             _request = Request;
+            
 
             Verb verb;
             if (!ValidateVerb(shortVerb))
@@ -42,10 +52,27 @@ namespace CMI5_AU.Services
                 verb = CreateVerb(shortVerb);
             }
 
+
+
+            string fetched_username = "";
+            string fetched_password = "";
             // Connect to the LRS
-            // Lets try and mash the enpoint out of the Query String
             var endpoint = _request.QueryString["endpoint"];
-            _lrs = string.IsNullOrEmpty(endpoint) ? ConnectLrs(_username, _password, endpoint) : ConnectLrs(_username, _password);
+
+            var actorJSON = string.IsNullOrEmpty(_request.QueryString["actor"]) ? null : JsonConvert.DeserializeObject<ActorJSON>(_request.QueryString["actor"]);
+
+            if (actorJSON != null)
+            {
+                //Get the username
+                fetched_username = actorJSON.account.name.Split('|')[1];
+                // Get the password
+                fetched_password = actorJSON.account.name.Split('|')[0];
+            }
+
+            // Lets try and mash the enpoint out of the Query String
+            _lrs = string.IsNullOrEmpty(endpoint) ? ConnectLrs(_username, _password) : ConnectLrs(_username, _password, endpoint);
+
+
 
             // Create the statement context
             var context = new Context();
@@ -56,13 +83,17 @@ namespace CMI5_AU.Services
             // Define the activity
             var activity = CreateActivity();
 
+            var state1 = _lrs.auth;
+            var state = _lrs.RetrieveState("", activity, actor, context.registration);
+            // Debug.WriteLine("\n \n \n State Doc?: \n" + state.content.ToString() + "\n\nAuth:" + state1 + "\n\n");
+
             // Define the statement
             var statement = new Statement()
             {
                 actor = actor,
                 verb = verb,
                 target = activity,
-                context = context
+                context = context,
             };
 
             SendStatement(statement);
@@ -76,6 +107,7 @@ namespace CMI5_AU.Services
 
         private RemoteLRS ConnectLrs(string username, string password, string endpoint= "https://cloud.scorm.com/tc/YP5P8MYB6K/sandbox/")
         {
+            Debug.Write("\n ENDPOINT USED: " + endpoint + "\n");
             try
             {
                 return new RemoteLRS(endpoint, username, password);
@@ -106,20 +138,21 @@ namespace CMI5_AU.Services
 
         private Agent CreateActor(Context context)
         {
-            var actorJSON = JsonConvert.DeserializeObject<ActorJSON>(_request.QueryString["actor"]);
+            var actorJSON = string.IsNullOrEmpty(_request.QueryString["actor"]) ? null : JsonConvert.DeserializeObject<ActorJSON>(_request.QueryString["actor"]);
+
             var actor = new Agent();
 
             if (actorJSON == null)
             {
                 // TODO: Create context creation function once I understand the requirements
-                context.registration = new Guid(_request.QueryString["registration"]);
                 actor.mbox = "mailto:example@example.com";
                 actor.name = "Zaymon Foulds-Cook";
             }
             else
             {
+                context.registration = new Guid(_request.QueryString["registration"]);
                 var name = actorJSON.name;
-                var mbox = actorJSON.account.name; //.Split('|')[1]; ? Depending on if we need that identifier on the front?
+                var mbox =  "mailto:" + actorJSON.account.name.Split('|')[1]; // ? Depending on if we need that identifier on the front?
                 actor.mbox = mbox;
                 actor.name = name;
             }
@@ -131,9 +164,18 @@ namespace CMI5_AU.Services
             // Get the activityId from the query
             var activity = new Activity();
             var activityId = _request.QueryString["activityId"];
+
+            // Setup the activity definition
+            var activityDefinition = new ActivityDefinition();
+            activityDefinition.name = new LanguageMap();
+            activityDefinition.name.Add("en-US", "Course 3");
+
+
             if (activityId != null)
             {
+
                 activity.id = activityId;
+                activity.definition = activityDefinition;
             }
             else
             {
